@@ -3,7 +3,7 @@ import sys
 
 POWERS_OF_TWO = {1, 2, 4, 8, 16, 32, 64}
 FIBONACCI_SET = {0, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89}
-PRIME_NUMBERS = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97}
+PRIME_NUMBERS = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89}
 
 CELLS = {
     'O': {"value": 3},
@@ -83,7 +83,6 @@ def main():
 
         # Get constant height for matrix
         rows = len(matrix)
-        print(matrix)
 
     # 3. Map life simulation rules
     for inner in range(-24, 25):  # 8 cells with (-3 to 3) value each = (-24 to 24)
@@ -134,7 +133,7 @@ def main():
                 CELLS["X"][inner][outer] = "X"
 
     # 3. Matrix Processing
-    for _ in range(1):
+    for _ in range(100):
         sim_matrix = [["."] * cols for _ in range(rows)]
         # matrix iteration
         for y in range(2, rows - 2):
@@ -145,75 +144,43 @@ def main():
             higher_row = matrix[y + 2]
 
             for x in range(2, cols - 2):
-                print(f"x: {x - 1} y: {y - 1}")
-                print(f"matrix: {matrix}")
                 # ring scores
-                inner_score = (CELLS[low_row[x - 1]]["value"] + CELLS[low_row[x]]["value"] + CELLS[low_row[x + 1]][
-                    "value"] + CELLS[self_row[x - 1]]["value"] + CELLS[self_row[x + 1]]["value"] +
-                               CELLS[high_row[x - 1]]["value"] + CELLS[high_row[x]]["value"] + CELLS[high_row[x + 1]][
-                                   "value"])
+                inner_score = (
+                    # low_row
+                        CELLS[low_row[x - 1]]["value"] + CELLS[low_row[x]]["value"] +
+                        CELLS[low_row[x + 1]]["value"] +
+                        # self_row
+                        CELLS[self_row[x - 1]]["value"] + CELLS[self_row[x + 1]]["value"] +
+                        # high_row
+                        CELLS[high_row[x - 1]]["value"] + CELLS[high_row[x]]["value"] +
+                        CELLS[high_row[x + 1]]["value"]
+                )
 
                 outer_score = (
-                            CELLS[lower_row[x - 2]]["value"] + CELLS[lower_row[x - 1]]["value"] + CELLS[lower_row[x]][
-                        "value"] + CELLS[lower_row[x + 1]]["value"] + CELLS[lower_row[x + 2]]["value"] +
-                            CELLS[low_row[x - 2]]["value"] + CELLS[low_row[x + 2]]["value"] + CELLS[self_row[x - 2]][
-                                "value"] + CELLS[self_row[x + 2]]["value"] + CELLS[high_row[x - 2]]["value"] + CELLS[high_row[x + 2]]["value"] +
-                            CELLS[higher_row[x - 2]]["value"] + CELLS[high_row[x - 1]]["value"] + CELLS[higher_row[x]][
-                                "value"] + CELLS[higher_row[x + 1]]["value"] + CELLS[higher_row[x + 2]]["value"])
+                    # lower_row
+                        CELLS[lower_row[x - 2]]["value"] + CELLS[lower_row[x - 1]]["value"] +
+                        CELLS[lower_row[x]]["value"] +
+                        CELLS[lower_row[x + 1]]["value"] + CELLS[lower_row[x + 2]]["value"] +
+                        # low_row
+                        CELLS[low_row[x - 2]]["value"] + CELLS[low_row[x + 2]]["value"] +
+                        # self_row
+                        CELLS[self_row[x - 2]]["value"] + CELLS[self_row[x + 2]]["value"] +
+                        # high_row
+                        CELLS[high_row[x - 2]]["value"] + CELLS[high_row[x + 2]]["value"] +
+                        # higher_row
+                        CELLS[higher_row[x - 2]]["value"] + CELLS[higher_row[x - 1]]["value"] +
+                        CELLS[higher_row[x]]["value"] +
+                        CELLS[higher_row[x + 1]]["value"] + CELLS[higher_row[x + 2]]["value"]
+                )
 
-                influence_score = 2 * inner_score + outer_score
                 cell = self_row[x]
-                print(f"cell: {cell}")
-                print(f"inner_score: {inner_score}")
-                print(f"outer_score: {outer_score}")
-                print(f"influence_score: {influence_score}")
 
                 # cell update rules
                 sim_matrix[y][x] = CELLS[cell][inner_score][outer_score]
-                # sim_matrix cell default values are always 0, so conditionals are optimized to not re-assign 0
-                # cell is 'O'
-                # if cell == 3:
-                #     if influence_score not in POWERS_OF_TWO:
-                #         sim_matrix[y][x] = 1 if outer_score < 2 else 3
-                #
-                # # cell is 'o'
-                # elif cell == 1:
-                #     if inner_score in FIBONACCI_SET:
-                #         sim_matrix[y][x] = 3
-                #     elif influence_score > 0:
-                #         sim_matrix[y][x] = 1
-                #
-                # # cell is '.'
-                # elif cell == 0:
-                #     if influence_score in PRIME_NUMBERS:
-                #         sim_matrix[y][x] = 1
-                #     elif influence_score < 0 and -influence_score in PRIME_NUMBERS:
-                #         sim_matrix[y][x] = -1
-                #
-                # # cell is 'x'
-                # elif cell == -1:
-                #     if inner_score < 0 and -inner_score in FIBONACCI_SET:
-                #         sim_matrix[y][x] = -3
-                #     elif influence_score < 0:
-                #         sim_matrix[y][x] = -1
-                #
-                # # cell is 'X'
-                # elif cell == -3:
-                #     if influence_score < 0 and -1 * influence_score in POWERS_OF_TWO:
-                #         sim_matrix[y][x] = 0
-                #     elif outer_score > -2:
-                #         sim_matrix[y][x] = -1
-                #     else:
-                #         sim_matrix[y][x] = -3
 
-                print(f"cell update: {sim_matrix[y][x]}")
-                print(f"new matrix: {sim_matrix}\n")
-
-        print(sim_matrix)
         matrix = sim_matrix
 
     # 4. Write Matrix
-    print(matrix)
     with open("test_output.txt", 'w') as file:
         for y in range(2, rows - 2):
             for x in range(2, cols - 2):
