@@ -1,10 +1,17 @@
 import argparse
 import sys
 
-CELL_TYPES = {'O', 'X', 'o', 'x', '.', '\n'}
-POWERS_OF_TWO = {1, 2, 4, 8, 16, 32, 64, 128}
-FIBONACCI_SET = {0, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144}
+POWERS_OF_TWO = {1, 2, 4, 8, 16, 32, 64}
+FIBONACCI_SET = {0, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89}
 PRIME_NUMBERS = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97}
+
+CELLS = {
+    'O': {"value": 3},
+    'o': {"value": 1},
+    ".": {"value": 0},
+    "x": {"value": -1},
+    "X": {"value": -3}
+}
 
 
 def main():
@@ -26,33 +33,28 @@ def main():
         file_line = file.readline().strip()
 
         # Adding padding to the row start
-        row = [0] * 2
+        row = ["."] * 2
+
+        # Getting all cells in row from file
         for cell in file_line:
-            if cell not in CELL_TYPES:
+            if cell in CELLS:
+                row.append(cell)
+            elif cell != "\n":
                 print(f"Invalid cell type: '{cell}'")
                 sys.exit(1)
-            elif cell == 'O':
-                row.append(3)
-            elif cell == 'o':
-                row.append(1)
-            elif cell == '.':
-                row.append(0)
-            elif cell == 'x':
-                row.append(-1)
-            elif cell == 'X':
-                row.append(-3)
 
         # Adding padding to the row end
-        row.append(0)
-        row.append(0)
+        row.append(".")
+        row.append(".")
 
         # Get constant length for all rows
         cols = len(row)
 
         # Adding upper padding to the matrix
-        matrix.append([0] * cols)
-        matrix.append([0] * cols)
+        matrix.append(["."] * cols)
+        matrix.append(["."] * cols)
 
+        # Adding the first row of the matrix
         matrix.append(row)
 
         # Get next lines in file
@@ -61,39 +63,79 @@ def main():
             if not line:
                 break
 
-            row = [0] * 2
+            row = ["."] * 2
 
             if len(line) != (cols - 4):
                 print(f"Invalid row length: '{len(line)}'")
 
             for cell in file_line:
-                if cell not in CELL_TYPES:
+                if cell in CELLS:
+                    row.append(cell)
+                elif cell != "\n":
                     print(f"Invalid cell type: '{cell}'")
                     sys.exit(1)
-                elif cell == 'O':
-                    row.append(3)
-                elif cell == 'o':
-                    row.append(1)
-                elif cell == '.':
-                    row.append(0)
-                elif cell == 'x':
-                    row.append(-1)
-                elif cell == 'X':
-                    row.append(-3)
 
-            matrix.append(row + [0] * 2)
+            matrix.append(row + ["."] * 2)
 
         # Adding lower padding to the matrix
-        matrix.append([0] * cols)
-        matrix.append([0] * cols)
+        matrix.append(["."] * cols)
+        matrix.append(["."] * cols)
 
         # Get constant height for matrix
         rows = len(matrix)
+        print(matrix)
+
+    # 3. Map life simulation rules
+    for inner in range(-24, 25):  # 8 cells with (-3 to 3) value each = (-24 to 24)
+        for cell in CELLS:
+            CELLS[cell][inner] = {}
+
+        for outer in range(-48, 49):  # 16 cells with (-3 to 3) value each = (-48 to 48)
+            influence = 2 * inner + outer
+
+            # cell is 'O'
+            if influence in POWERS_OF_TWO:
+                CELLS["O"][inner][outer] = "."
+            elif outer < 2:
+                CELLS["O"][inner][outer] = "o"
+            else:
+                CELLS["O"][inner][outer] = "O"
+
+            # cell is 'o'
+            if inner in FIBONACCI_SET:
+                CELLS["o"][inner][outer] = "O"
+            elif influence <= 0:
+                CELLS["o"][inner][outer] = "."
+            else:
+                CELLS["o"][inner][outer] = "o"
+
+            # cell is '.'
+            if influence in PRIME_NUMBERS:
+                CELLS["."][inner][outer] = "o"
+            elif influence < 0 and -influence in PRIME_NUMBERS:
+                CELLS["."][inner][outer] = "x"
+            else:
+                CELLS["."][inner][outer] = "."
+
+            # cell is 'x'
+            if inner < 0 and -inner in FIBONACCI_SET:
+                CELLS["x"][inner][outer] = "X"
+            elif influence >= 0:
+                CELLS["x"][inner][outer] = "."
+            else:
+                CELLS["x"][inner][outer] = "x"
+
+            # cell is 'X'
+            if influence < 0 and -influence in POWERS_OF_TWO:
+                CELLS["X"][inner][outer] = "."
+            elif outer > -2:
+                CELLS["X"][inner][outer] = "x"
+            else:
+                CELLS["X"][inner][outer] = "X"
 
     # 3. Matrix Processing
-    # time_steps
     for _ in range(1):
-        sim_matrix = [[0] * cols for _ in range(rows)]
+        sim_matrix = [["."] * cols for _ in range(rows)]
         # matrix iteration
         for y in range(2, rows - 2):
             lower_row = matrix[y - 2]
@@ -106,17 +148,18 @@ def main():
                 print(f"x: {x - 1} y: {y - 1}")
                 print(f"matrix: {matrix}")
                 # ring scores
-                inner_score = (low_row[x - 1] + low_row[x] + low_row[x + 1] +
-                               self_row[x - 1] + self_row[x + 1] +
-                               high_row[x - 1] + high_row[x] + high_row[x + 1])
+                inner_score = (CELLS[low_row[x - 1]]["value"] + CELLS[low_row[x]]["value"] + CELLS[low_row[x + 1]][
+                    "value"] + CELLS[self_row[x - 1]]["value"] + CELLS[self_row[x + 1]]["value"] +
+                               CELLS[high_row[x - 1]]["value"] + CELLS[high_row[x]]["value"] + CELLS[high_row[x + 1]][
+                                   "value"])
 
                 outer_score = (
-                        lower_row[x - 2] + lower_row[x - 1] + lower_row[x] + lower_row[x + 1] + lower_row[x + 2] +
-                        low_row[x - 2] + low_row[x + 2] +
-                        self_row[x - 2] + self_row[x + 2] +
-                        high_row[x - 2] + high_row[x + 2] +
-                        higher_row[x - 2] + higher_row[x - 1] + higher_row[x] + higher_row[x + 1] + higher_row[
-                            x + 2])
+                            CELLS[lower_row[x - 2]]["value"] + CELLS[lower_row[x - 1]]["value"] + CELLS[lower_row[x]][
+                        "value"] + CELLS[lower_row[x + 1]]["value"] + CELLS[lower_row[x + 2]]["value"] +
+                            CELLS[low_row[x - 2]]["value"] + CELLS[low_row[x + 2]]["value"] + CELLS[self_row[x - 2]][
+                                "value"] + CELLS[self_row[x + 2]]["value"] + CELLS[high_row[x - 2]]["value"] + CELLS[high_row[x + 2]]["value"] +
+                            CELLS[higher_row[x - 2]]["value"] + CELLS[high_row[x - 1]]["value"] + CELLS[higher_row[x]][
+                                "value"] + CELLS[higher_row[x + 1]]["value"] + CELLS[higher_row[x + 2]]["value"])
 
                 influence_score = 2 * inner_score + outer_score
                 cell = self_row[x]
@@ -126,41 +169,42 @@ def main():
                 print(f"influence_score: {influence_score}")
 
                 # cell update rules
+                sim_matrix[y][x] = CELLS[cell][inner_score][outer_score]
                 # sim_matrix cell default values are always 0, so conditionals are optimized to not re-assign 0
                 # cell is 'O'
-                if cell == 3:
-                    if influence_score not in POWERS_OF_TWO:
-                        sim_matrix[y][x] = 1 if outer_score < 2 else 3
-
-                # cell is 'o'
-                elif cell == 1:
-                    if inner_score in FIBONACCI_SET:
-                        sim_matrix[y][x] = 3
-                    elif influence_score > 0:
-                        sim_matrix[y][x] = 1
-
-                # cell is '.'
-                elif cell == 0:
-                    if influence_score in PRIME_NUMBERS:
-                        sim_matrix[y][x] = 1
-                    elif influence_score < 0 and -influence_score in PRIME_NUMBERS:
-                        sim_matrix[y][x] = -1
-
-                # cell is 'x'
-                elif cell == -1:
-                    if inner_score < 0 and -inner_score in FIBONACCI_SET:
-                        sim_matrix[y][x] = -3
-                    elif influence_score < 0:
-                        sim_matrix[y][x] = -1
-
-                # cell is 'X'
-                elif cell == -3:
-                    if influence_score < 0 and -1 * influence_score in POWERS_OF_TWO:
-                        sim_matrix[y][x] = 0
-                    elif outer_score > -2:
-                        sim_matrix[y][x] = -1
-                    else:
-                        sim_matrix[y][x] = -3
+                # if cell == 3:
+                #     if influence_score not in POWERS_OF_TWO:
+                #         sim_matrix[y][x] = 1 if outer_score < 2 else 3
+                #
+                # # cell is 'o'
+                # elif cell == 1:
+                #     if inner_score in FIBONACCI_SET:
+                #         sim_matrix[y][x] = 3
+                #     elif influence_score > 0:
+                #         sim_matrix[y][x] = 1
+                #
+                # # cell is '.'
+                # elif cell == 0:
+                #     if influence_score in PRIME_NUMBERS:
+                #         sim_matrix[y][x] = 1
+                #     elif influence_score < 0 and -influence_score in PRIME_NUMBERS:
+                #         sim_matrix[y][x] = -1
+                #
+                # # cell is 'x'
+                # elif cell == -1:
+                #     if inner_score < 0 and -inner_score in FIBONACCI_SET:
+                #         sim_matrix[y][x] = -3
+                #     elif influence_score < 0:
+                #         sim_matrix[y][x] = -1
+                #
+                # # cell is 'X'
+                # elif cell == -3:
+                #     if influence_score < 0 and -1 * influence_score in POWERS_OF_TWO:
+                #         sim_matrix[y][x] = 0
+                #     elif outer_score > -2:
+                #         sim_matrix[y][x] = -1
+                #     else:
+                #         sim_matrix[y][x] = -3
 
                 print(f"cell update: {sim_matrix[y][x]}")
                 print(f"new matrix: {sim_matrix}\n")
@@ -173,17 +217,7 @@ def main():
     with open("test_output.txt", 'w') as file:
         for y in range(2, rows - 2):
             for x in range(2, cols - 2):
-                cell = matrix[y][x]
-                if cell == 3:
-                    file.write("O")
-                elif cell == 1:
-                    file.write("o")
-                elif cell == 0:
-                    file.write(".")
-                elif cell == -1:
-                    file.write("x")
-                elif cell == -3:
-                    file.write("X")
+                file.write(matrix[y][x])
 
             file.write('\n')
 
