@@ -1,5 +1,6 @@
 import argparse
 import sys
+import os
 
 POWERS_OF_TWO = {1, 2, 4, 8, 16, 32, 64}
 FIBONACCI_SET = {0, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89}
@@ -22,6 +23,16 @@ def main():
     parser.add_argument('-p', type=int, default=1, help="Number of processes to spawn (Ignored in Phase 1)")
 
     args = parser.parse_args()
+
+    if not os.path.isfile(args.i):
+        print(f"Error: input file {args.i} not found or inaccessible")
+
+    out_dir = os.path.dirname(args.o)
+    if out_dir and not os.path.isdir(out_dir):
+        print(f"Error: output directory {out_dir} not found or inaccessible")
+
+    if args.p < 1:
+        print(f"Error: number of processes {args.p} is not 1 or greater")
 
     # 1.2.1 Read Matrix
     matrix = []
