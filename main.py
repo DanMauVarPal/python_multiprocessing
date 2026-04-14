@@ -16,17 +16,17 @@ def main():
     print("Project :: R11998328")
 
     # 1.1 Data Retrieval
-    # parser = argparse.ArgumentParser(description="Serial Cellular Life Simulator")
-    # parser.add_argument('-i', type=str, required=True, help="Path to the starting cellular matrix")
-    # parser.add_argument('-o', type=str, required=True, help="Path for the final output file")
-    # parser.add_argument('-p', type=int, default=1, help="Number of processes to spawn (Ignored in Phase 1)")
-    #
-    # args = parser.parse_args()
+    parser = argparse.ArgumentParser(description="Serial Cellular Life Simulator")
+    parser.add_argument('-i', type=str, required=True, help="Path to the starting cellular matrix")
+    parser.add_argument('-o', type=str, required=True, help="Path for the final output file")
+    parser.add_argument('-p', type=int, default=1, help="Number of processes to spawn (Ignored in Phase 1)")
+
+    args = parser.parse_args()
 
     # 1.2.1 Read Matrix
     matrix = []
-    # with open(args.i) as file:
-    with open("ten_by_ten/time_step_0.dat") as file:
+    with open(args.i) as file:
+    # with open("ten_by_ten/time_step_0.dat") as file:
         # Get first line in file
         file_line = file.readline().strip()
 
@@ -177,7 +177,8 @@ def main():
         matrix = sim_matrix
 
     # 1.2.2 Write Matrix
-    with open("test_output.txt", 'w') as file:
+    with open(args.o, 'w') as file:
+    # with open("test_output.txt", 'w') as file:
         for y in range(2, rows - 2):
             row = matrix[y]
             for x in range(2, cols - 2):
