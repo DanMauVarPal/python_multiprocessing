@@ -1,6 +1,7 @@
 import argparse
-import sys
+import copy
 import os
+import sys
 
 POWERS_OF_TWO = {1, 2, 4, 8, 16, 32, 64}
 FIBONACCI_SET = {0, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89}
@@ -17,22 +18,29 @@ def main():
     print("Project :: R11998328")
 
     # 1.1 Data Retrieval
+    # Parser declaration
     parser = argparse.ArgumentParser(description="Serial Cellular Life Simulator")
-    parser.add_argument('-i', type=str, required=True, help="Path to the starting cellular matrix")
-    parser.add_argument('-o', type=str, required=True, help="Path for the final output file")
-    parser.add_argument('-p', type=int, default=1, help="Number of processes to spawn (Ignored in Phase 1)")
 
+    # Arguments declaration
+    parser.add_argument('-i', type=str, required=True, help="Path to the starting cellular matrix input file")
+    parser.add_argument('-o', type=str, required=True, help="Path for store cellular simulation matrix output file")
+    parser.add_argument('-p', type=int, default=1, help="Number of processes")
+
+    # Parse arguments from command line
     args = parser.parse_args()
 
+    # Check if the input argument is not a file, inaccessible or not found
     if not os.path.isfile(args.i):
         print(f"Error: input file {args.i} not found or inaccessible")
         sys.exit(1)
 
-    out_dir = os.path.dirname(args.o)
+    # Check if the directory for the output file exists
+    out_dir = os.path.dirname(args.o)  # Get the dir for output only
     if out_dir and not os.path.isdir(out_dir):
         print(f"Error: output directory {out_dir} not found or inaccessible")
         sys.exit(1)
 
+    # Check if the processes argument is greater than or equal to 1
     if args.p < 1:
         print(f"Error: number of processes {args.p} is not 1 or greater")
         sys.exit(1)
@@ -145,10 +153,10 @@ def main():
             else:
                 STAGE_UPDATE[-3][inner_score][outer_score] = -3
 
+    # Storage matrix for end of iteration
+    sim_matrix = copy.deepcopy(matrix)
     # 1.3 Matrix Processing
     for _ in range(100):
-        # Storage matrix for end of iteration
-        sim_matrix = [[0] * cols for _ in range(rows)]
         # Matrix iteration
         for y in range(2, rows - 2):
             # 5 rows for the 5x5 score calculation
@@ -160,28 +168,34 @@ def main():
 
             # Row iteration
             for x in range(2, cols - 2):
+                # x positions for rings
+                x_left2 = x - 2
+                x_left1 = x - 1
+                x_right1 = x + 1
+                x_right2 = x + 2
+
                 # 1.3.2.1a Inner ring consisting of 8 adjacent cells
                 inner_score = (
                     # low_row
-                        low_row[x - 1] + low_row[x] + low_row[x + 1] +
+                        low_row[x_left1] + low_row[x] + low_row[x_right1] +
                         # self_row
-                        self_row[x - 1] + self_row[x + 1] +
+                        self_row[x_left1] + self_row[x_right1] +
                         # high_row
-                        high_row[x - 1] + high_row[x] + high_row[x + 1]
+                        high_row[x_left1] + high_row[x] + high_row[x_right1]
                 )
 
                 # 1.3.2.1b Outer ring consisting of remaining 16 cells within 5x5 region
                 outer_score = (
                     # lower_row
-                        lower_row[x - 2] + lower_row[x - 1] + lower_row[x] + lower_row[x + 1] + lower_row[x + 2] +
+                        lower_row[x_left2] + lower_row[x_left1] + lower_row[x] + lower_row[x_right1] + lower_row[x_right2] +
                         # low_row
-                        low_row[x - 2] + low_row[x + 2] +
+                        low_row[x_left2] + low_row[x_right2] +
                         # self_row
-                        self_row[x - 2] + self_row[x + 2] +
+                        self_row[x_left2] + self_row[x_right2] +
                         # high_row
-                        high_row[x - 2] + high_row[x + 2] +
+                        high_row[x_left2] + high_row[x_right2] +
                         # higher_row
-                        higher_row[x - 2] + higher_row[x - 1] + higher_row[x] + higher_row[x + 1] + higher_row[x + 2]
+                        higher_row[x_left2] + higher_row[x_left1] + higher_row[x] + higher_row[x_right1] + higher_row[x_right2]
                 )
 
                 # Updating the cell based on the simulation rules
