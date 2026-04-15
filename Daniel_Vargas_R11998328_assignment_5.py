@@ -1,5 +1,6 @@
 import argparse
 import sys
+import os
 
 POWERS_OF_TWO = {1, 2, 4, 8, 16, 32, 64}
 FIBONACCI_SET = {0, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89}
@@ -23,10 +24,23 @@ def main():
 
     args = parser.parse_args()
 
+    if not os.path.isfile(args.i):
+        print(f"Error: input file {args.i} not found or inaccessible")
+        sys.exit(1)
+
+    out_dir = os.path.dirname(args.o)
+    if out_dir and not os.path.isdir(out_dir):
+        print(f"Error: output directory {out_dir} not found or inaccessible")
+        sys.exit(1)
+
+    if args.p < 1:
+        print(f"Error: number of processes {args.p} is not 1 or greater")
+        sys.exit(1)
+
     # 1.2.1 Read Matrix
     matrix = []
     with open(args.i) as file:
-    # with open("ten_by_ten/time_step_0.dat") as file:
+        # with open("ten_by_ten/time_step_0.dat") as file:
         # Get first line in file
         file_line = file.readline().strip()
 
@@ -178,7 +192,7 @@ def main():
 
     # 1.2.2 Write Matrix
     with open(args.o, 'w') as file:
-    # with open("test_output.txt", 'w') as file:
+        # with open("test_output.txt", 'w') as file:
         for y in range(2, rows - 2):
             row = matrix[y]
             for x in range(2, cols - 2):
