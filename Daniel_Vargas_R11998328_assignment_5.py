@@ -19,36 +19,36 @@ def main():
 
     # 1.1 Data Retrieval
     # Parser declaration
-    # parser = argparse.ArgumentParser(description="Serial Cellular Life Simulator")
-    #
-    # # Arguments declaration
-    # parser.add_argument('-i', type=str, required=True, help="Path to the starting cellular matrix input file")
-    # parser.add_argument('-o', type=str, required=True, help="Path for store cellular simulation matrix output file")
-    # parser.add_argument('-p', type=int, default=1, help="Number of processes")
-    #
-    # # Parse arguments from command line
-    # args = parser.parse_args()
-    #
-    # # Check if the input argument is not a file, inaccessible or not found
-    # if not os.path.isfile(args.i):
-    #     print(f"Error: input file {args.i} not found or inaccessible")
-    #     sys.exit(1)
-    #
-    # # Check if the directory for the output file exists
-    # out_dir = os.path.dirname(args.o)  # Get the dir for output only
-    # if out_dir and not os.path.isdir(out_dir):
-    #     print(f"Error: output directory {out_dir} not found or inaccessible")
-    #     sys.exit(1)
-    #
-    # # Check if the processes argument is greater than or equal to 1
-    # if args.p < 1:
-    #     print(f"Error: number of processes {args.p} is not 1 or greater")
-    #     sys.exit(1)
+    parser = argparse.ArgumentParser(description="Serial Cellular Life Simulator")
+
+    # Arguments declaration
+    parser.add_argument('-i', type=str, required=True, help="Path to the starting cellular matrix input file")
+    parser.add_argument('-o', type=str, required=True, help="Path for store cellular simulation matrix output file")
+    parser.add_argument('-p', type=int, default=1, help="Number of processes")
+
+    # Parse arguments from command line
+    args = parser.parse_args()
+
+    # Check if the input argument is not a file, inaccessible or not found
+    if not os.path.isfile(args.i):
+        print(f"Error: input file {args.i} not found or inaccessible")
+        sys.exit(1)
+
+    # Check if the directory for the output file exists
+    out_dir = os.path.dirname(args.o)  # Get the dir for output only
+    if out_dir and not os.path.isdir(out_dir):
+        print(f"Error: output directory {out_dir} not found or inaccessible")
+        sys.exit(1)
+
+    # Check if the processes argument is greater than or equal to 1
+    if args.p < 1:
+        print(f"Error: number of processes {args.p} is not 1 or greater")
+        sys.exit(1)
 
     # 1.2.1 Read Matrix
     matrix = []
-    # with open(args.i) as file:
-    with open("ten_by_ten/time_step_0.dat") as file:
+    with open(args.i) as file:
+        # with open("ten_by_ten/time_step_0.dat") as file:
         # Get first line in file
         file_line = file.readline().strip()
 
@@ -187,7 +187,8 @@ def main():
                 # 1.3.2.1b Outer ring consisting of remaining 16 cells within 5x5 region
                 outer_score = (
                     # lower_row
-                        lower_row[x_left2] + lower_row[x_left1] + lower_row[x] + lower_row[x_right1] + lower_row[x_right2] +
+                        lower_row[x_left2] + lower_row[x_left1] + lower_row[x] + lower_row[x_right1] + lower_row[
+                    x_right2] +
                         # low_row
                         low_row[x_left2] + low_row[x_right2] +
                         # self_row
@@ -195,7 +196,8 @@ def main():
                         # high_row
                         high_row[x_left2] + high_row[x_right2] +
                         # higher_row
-                        higher_row[x_left2] + higher_row[x_left1] + higher_row[x] + higher_row[x_right1] + higher_row[x_right2]
+                        higher_row[x_left2] + higher_row[x_left1] + higher_row[x] + higher_row[x_right1] + higher_row[
+                            x_right2]
                 )
 
                 # Updating the cell based on the simulation rules
@@ -205,8 +207,8 @@ def main():
         matrix = copy.deepcopy(sim_matrix)
 
     # 1.2.2 Write Matrix
-    # with open(args.o, 'w') as file:
-    with open("test_output.txt", 'w') as file:
+    with open(args.o, 'w') as file:
+        # with open("test_output.txt", 'w') as file:
         for y in range(2, rows - 2):
             row = matrix[y]
             for x in range(2, cols - 2):
