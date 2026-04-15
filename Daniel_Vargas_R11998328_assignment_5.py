@@ -156,7 +156,7 @@ def main():
     # Storage matrix for end of iteration
     sim_matrix = copy.deepcopy(matrix)
     # 1.3 Matrix Processing
-    for _ in range(2):
+    for _ in range(100):
         # Matrix iteration
         for y in range(2, rows - 2):
             # 5 rows for the 5x5 score calculation
