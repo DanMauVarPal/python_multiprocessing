@@ -1,3 +1,15 @@
+"""
+=============================================================================
+Title           : Daniel_Vargas_R11998328.py
+Description     : Serial Cell Life Simulator.
+Author          : var28790 (R#11998328)
+Date            : 04/20/2001
+Version         : 1.0
+Usage           : python3 example.py -i input_file_path -o output_file_path
+Python Version  : 3.13
+=============================================================================
+"""
+
 import argparse
 import copy
 import os
