@@ -85,7 +85,7 @@ ruleCreation()
 
 
 # Life simulation function
-def chunk_simulation(matrix):
+def chunkSimulation(matrix):
     rows = len(matrix)
     cols = len(matrix[0])
 
@@ -222,64 +222,49 @@ def main():
             # Adding rows with cells to matrix
             matrix.append(row)
 
-        # Adding lower dead cells to the matrix
+        # Adding dead cells to the matrix
         matrix = [[0] * cols, [0] * cols] + matrix + [[0] * cols, [0] * cols]
 
         # Get constant height for matrix
         rows = len(matrix)
 
     # 1.3 Matrix Processing
-    # Storage matrix for end of iteration
-    sim_matrix = copy.deepcopy(matrix)
-    for _ in range(100):
-        # Matrix iteration
-        for y in range(2, rows - 2):
-            # 5 rows for the 5x5 score calculation
-            lower_row = matrix[y - 2]
-            low_row = matrix[y - 1]
-            self_row = matrix[y]
-            high_row = matrix[y + 1]
-            higher_row = matrix[y + 2]
+    # Slicing calculation
+    procs = args.p
+    liveRows = rows - 4
+    # Constant row allocation for all processes
+    baseChunk = liveRows // procs
+    # Remaining rows in case of imperfect division
+    rem = liveRows % procs
 
-            # Row iteration
-            for x in range(2, cols - 2):
-                # x positions for rings
-                x_left2 = x - 2
-                x_left1 = x - 1
-                x_right1 = x + 1
-                x_right2 = x + 2
+    # Storing for matrix slices start and end indexes
+    chunkIndexes = []
+    start = 2
 
-                # 1.3.2.1a Inner ring consisting of 8 adjacent cells
-                inner_score = (
-                    # low_row
-                        low_row[x_left1] + low_row[x] + low_row[x_right1] +
-                        # self_row
-                        self_row[x_left1] + self_row[x_right1] +
-                        # high_row
-                        high_row[x_left1] + high_row[x] + high_row[x_right1]
-                )
+    for i in range(procs):
+        size = baseChunk + (1 if i < rem else 0)
+        end = start + size
+        chunkIndexes.append((start, end))
+        start = end
+    
+    # Process all
+    with Pool(processes=procs) as pool:
+        for _ in range(100):
+            # Scatter the matrix
+            chunks = []
+            for start, end in chunkIndexes:
+                chunks.append(matrix[start - 2, end + 2]
 
-                # 1.3.2.1b Outer ring consisting of remaining 16 cells within 5x5 region
-                outer_score = (
-                    # lower_row
-                        lower_row[x_left2] + lower_row[x_left1] + lower_row[x] + lower_row[x_right1] + lower_row[
-                    x_right2] +
-                        # low_row
-                        low_row[x_left2] + low_row[x_right2] +
-                        # self_row
-                        self_row[x_left2] + self_row[x_right2] +
-                        # high_row
-                        high_row[x_left2] + high_row[x_right2] +
-                        # higher_row
-                        higher_row[x_left2] + higher_row[x_left1] + higher_row[x] + higher_row[x_right1] + higher_row[
-                            x_right2]
-                )
+            # Start parallel processes
+            res = pool.map(chunkSimulation, chunks)
 
-                # Updating the cell based on the simulation rules
-                sim_matrix[y][x] = STAGE_UPDATE[self_row[x]][inner_score][outer_score]
+            # Gather the updated rows
+            matrix = []
+            for chunk in res:
+                matrix.extend(chunk)
 
-        # Updating the base matrix
-        matrix = copy.deepcopy(sim_matrix)
+            # Adding dead cells to the matrix
+            matrix = [[0] * cols, [0] * cols] + matrix + [[0] * cols, [0] * cols]
 
     # 1.2.2 Write Matrix
     with open(args.o, 'w') as file:
