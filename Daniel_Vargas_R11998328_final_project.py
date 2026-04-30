@@ -1,6 +1,6 @@
 """
 ================================================================================================
-Title           : Daniel_Vargas_R11998328.py
+Title           : Daniel_Vargas_R11998328_final_project.py
 Description     : Serial Cell Life Simulator.
 Author          : var28790 (R#11998328)
 Date            : 05/01/2026
@@ -31,7 +31,7 @@ STAGE_UPDATE = {3: {}, 1: {}, 0: {}, -1: {}, -3: {}}
 
 
 # Create update dictionary
-def ruleCreation():
+def rule_creation():
     for inner_score in range(-24, 25):  # 8 cells with (-3 to 3) value each = (-24 to 24)
         for cell in STAGE_UPDATE:
             STAGE_UPDATE[cell][inner_score] = {}
@@ -80,12 +80,13 @@ def ruleCreation():
             else:
                 STAGE_UPDATE[-3][inner_score][outer_score] = -3
 
+
 # 1.3.2 Iterative Rules
-ruleCreation()
+rule_creation()
 
 
 # Life simulation function
-def chunkSimulation(matrix):
+def chunk_simulation(matrix):
     rows = len(matrix)
     cols = len(matrix[0])
 
@@ -114,7 +115,7 @@ def chunkSimulation(matrix):
                 # low_row
                     low_row[x_left1] + low_row[x] + low_row[x_right1] +
                     # self_row
-                    self_row[x _left1] + self_row[x_right1] +
+                    self_row[x_left1] + self_row[x_right1] +
                     # high_row
                     high_row[x_left1] + high_row[x] + high_row[x_right1]
             )
@@ -137,8 +138,8 @@ def chunkSimulation(matrix):
 
             # Updating the cell based on the simulation rules
             sim_matrix[y][x] = STAGE_UPDATE[self_row[x]][inner_score][outer_score]
-    
-    return sim_matrix[2 : rows-2]
+
+    return sim_matrix[2: rows - 2]
 
 
 # Main driver function
@@ -163,7 +164,7 @@ def main():
         sys.exit(1)
 
     # Check if the directory for the output file exists
-    out_dir = os.path.dirname(args.o)  # Get the dir for output only
+    out_dir = os.path.dirname(args.o)  # Get the dir only for output
     if out_dir and not os.path.isdir(out_dir):
         print(f"Error: output directory {out_dir} not found or inaccessible")
         sys.exit(1)
@@ -175,8 +176,8 @@ def main():
 
     # 1.2.1 Read Matrix
     matrix = []
-    with open(args.i) as file:
-        # with open("ten_by_ten/time_step_0.dat") as file:
+    # with open(args.i) as file:
+    with open("test_inputs/100x100_time_step_0.dat") as file:
         # Get first line in file
         file_line = file.readline().strip()
 
@@ -218,7 +219,7 @@ def main():
                     sys.exit(1)
 
             row.extend([0, 0])
-            
+
             # Adding rows with cells to matrix
             matrix.append(row)
 
@@ -228,35 +229,36 @@ def main():
         # Get constant height for matrix
         rows = len(matrix)
 
-    # 1.3 Matrix Processing
+    # 2.1 Concurrency Using Multiprocessing
     # Slicing calculation
     procs = args.p
-    liveRows = rows - 4
+    # procs = 7
+    live_rows = rows - 4
     # Constant row allocation for all processes
-    baseChunk = liveRows // procs
+    base_chunk = live_rows // procs
     # Remaining rows in case of imperfect division
-    rem = liveRows % procs
+    rem = live_rows % procs
 
     # Storing for matrix slices start and end indexes
-    chunkIndexes = []
+    chunk_indexes = []
     start = 2
 
     for i in range(procs):
-        size = baseChunk + (1 if i < rem else 0)
+        size = base_chunk + (1 if i < rem else 0)
         end = start + size
-        chunkIndexes.append((start, end))
+        chunk_indexes.append((start, end))
         start = end
-    
-    # Process all
+
+    # 1.3 Matrix Processing
     with Pool(processes=procs) as pool:
         for _ in range(100):
             # Scatter the matrix
             chunks = []
-            for start, end in chunkIndexes:
-                chunks.append(matrix[start - 2, end + 2]
+            for start, end in chunk_indexes:
+                chunks.append(matrix[start - 2: end + 2])
 
             # Start parallel processes
-            res = pool.map(chunkSimulation, chunks)
+            res = pool.map(chunk_simulation, chunks)
 
             # Gather the updated rows
             matrix = []
