@@ -204,8 +204,9 @@ def matrix_slicing(procs, rows):
 
 
 # Life Simulation
-def chunk_simulation(data):
-    matrix, rows, cols, STAGE_UPDATE = data
+def chunk_simulation(matrix):
+    rows = len(matrix)
+    cols = len(matrix[0])
 
     # Matrix copy to work on
     sim_matrix = copy.deepcopy(matrix)
@@ -285,8 +286,10 @@ def main():
             for start, end in chunk_indexes:
                 chunks.append(matrix[start - 2: end + 2])
 
+            # proc_data = [(chunk, rows, cols, STAGE_UPDATE) for chunk in chunks
+
             # Start parallel processes
-            res = pool.map(chunk_simulation, [chunks, rows, cols, STAGE_UPDATE])
+            res = pool.map(chunk_simulation, chunks)
 
             # Gather the updated rows
             matrix.clear()
