@@ -1,13 +1,13 @@
 """
-================================================================================================
+=================================================================================================
 Title           : Daniel_Vargas_R11998328_final_project.py
 Description     : Serial Cell Life Simulator.
 Author          : var28790 (R#11998328)
 Date            : 05/01/2026
-Version         : 2.0
-Usage           : python3 example.py -i input_file_path -o output_file_path =p processes_number
+Version         : 2.3
+Usage           : python3 example.py -i input_file_path -o output_file_path -p processes_number
 Python Version  : 3.13
-================================================================================================
+=================================================================================================
 """
 
 import argparse
@@ -79,10 +79,6 @@ def rule_creation():
                 STAGE_UPDATE[-3][inner_score][outer_score] = -1
             else:
                 STAGE_UPDATE[-3][inner_score][outer_score] = -3
-
-
-# 1.3.2 Global Iterative Rules
-rule_creation()
 
 
 # Command Line Argument Parsing
@@ -208,9 +204,8 @@ def matrix_slicing(procs, rows):
 
 
 # Life Simulation
-def chunk_simulation(matrix):
-    rows = len(matrix)
-    cols = len(matrix[0])
+def chunk_simulation(data):
+    matrix, rows, cols, STAGE_UPDATE = data
 
     # Matrix copy to work on
     sim_matrix = copy.deepcopy(matrix)
@@ -275,6 +270,9 @@ def main():
     matrix, cols, rows = read_matrix(args.i)
     # matrix, cols, rows = read_matrix("test_inputs/100x100_time_step_0.dat")
 
+    # 1.3.2 Iterative Rules
+    rule_creation()
+
     # 2.1 Concurrency Using Multiprocessing
     # Slicing calculation
     chunk_indexes = matrix_slicing(args.p, rows - 4)
@@ -288,7 +286,7 @@ def main():
                 chunks.append(matrix[start - 2: end + 2])
 
             # Start parallel processes
-            res = pool.map(chunk_simulation, chunks)
+            res = pool.map(chunk_simulation, [chunks, rows, cols, STAGE_UPDATE])
 
             # Gather the updated rows
             matrix.clear()
@@ -300,6 +298,7 @@ def main():
 
     # 1.2.2 Write Matrix
     write_matrix(matrix, rows, cols, args.o)
+    # write_matrix(matrix, rows, cols, "test_output.txt")
 
 
 if __name__ == "__main__":
