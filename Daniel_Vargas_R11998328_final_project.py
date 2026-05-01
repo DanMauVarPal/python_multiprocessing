@@ -30,7 +30,7 @@ VALUE_TO_CELL = {3: "O", 1: "o", 0: ".", -1: "x", -3: "X"}
 STAGE_UPDATE = {3: {}, 1: {}, 0: {}, -1: {}, -3: {}}
 
 
-# Create update dictionary
+# Create Rules Dictionary
 def rule_creation():
     for inner_score in range(-24, 25):  # 8 cells with (-3 to 3) value each = (-24 to 24)
         for cell in STAGE_UPDATE:
@@ -81,11 +81,133 @@ def rule_creation():
                 STAGE_UPDATE[-3][inner_score][outer_score] = -3
 
 
-# 1.3.2 Iterative Rules
+# 1.3.2 Global Iterative Rules
 rule_creation()
 
 
-# Life simulation function
+# Command Line Argument Parsing
+def argument_parsing():
+    # Parser declaration
+    parser = argparse.ArgumentParser(description="Serial Cellular Life Simulator")
+
+    # Arguments declaration
+    parser.add_argument('-i', type=str, required=True, help="Path to the starting cellular matrix input file")
+    parser.add_argument('-o', type=str, required=True, help="Path for store cellular simulation matrix output file")
+    parser.add_argument('-p', type=int, default=1, help="Number of processes")
+
+    # Parse arguments from command line
+    args = parser.parse_args()
+
+    # Check if the input argument is not a file, inaccessible or not found
+    if not os.path.isfile(args.i):
+        print(f"Error: input file {args.i} not found or inaccessible")
+        sys.exit(1)
+
+    # Check if the directory for the output file exists
+    out_dir = os.path.dirname(args.o)  # Get the dir only for output
+    if out_dir and not os.path.isdir(out_dir):
+        print(f"Error: output directory {out_dir} not found or inaccessible")
+        sys.exit(1)
+
+    # Check if the processes argument is greater than or equal to 1
+    if args.p < 1:
+        print(f"Error: number of processes {args.p} is not 1 or greater")
+        sys.exit(1)
+
+    return args
+
+
+# Read Matrix From File
+def read_matrix(path):
+    matrix = []
+    with open(path) as file:
+        # Get first line in file
+        file_line = file.readline().strip()
+
+        # Adding dead cells to the row start
+        row = [0] * 2
+
+        # Getting all cells in row from file
+        for cell in file_line:
+            if cell in CELL_TO_VALUE:
+                row.append(CELL_TO_VALUE[cell])
+            elif cell != "\n":
+                print(f"Invalid cell type: '{cell}'")
+                sys.exit(1)
+
+        # Adding dead cells to the row end
+        row.extend([0, 0])
+
+        # Get constant length for all rows
+        cols = len(row)
+
+        # Adding the first row of the matrix
+        matrix.append(row)
+
+        # Get next lines in file
+        for file_line in file:
+            line = file_line.strip()
+
+            # Check if rows are all equal length
+            if len(line) != (cols - 4):
+                print(f"Invalid row length: '{len(line)}'")
+
+            row = [0] * 2
+
+            for cell in file_line:
+                if cell in CELL_TO_VALUE:
+                    row.append(CELL_TO_VALUE[cell])
+                elif cell != "\n":
+                    print(f"Invalid cell type: '{cell}'")
+                    sys.exit(1)
+
+            row.extend([0, 0])
+
+            # Adding rows with cells to matrix
+            matrix.append(row)
+
+        # Adding dead cells to the matrix
+        matrix = [[0] * cols, [0] * cols] + matrix + [[0] * cols, [0] * cols]
+
+        # Get constant height for matrix
+        rows = len(matrix)
+
+    return [matrix, cols, rows]
+
+
+# Write Matrix At File
+def write_matrix(matrix, rows, cols, path):
+    with open(path, 'w') as file:
+        for y in range(2, rows - 2):
+            row = matrix[y]
+            for x in range(2, cols - 2):
+                # Changing number values to character representations
+                file.write(VALUE_TO_CELL[row[x]])
+
+            file.write('\n')
+
+
+# Slice Matrix
+def matrix_slicing(procs, rows):
+    # Constant row allocation for all processes
+    base_chunk = rows // procs
+    # Remaining rows in case of imperfect division
+    rem = rows % procs
+
+    # Storing for matrix slices start and end indexes
+    chunk_indexes = []
+    start = 2
+
+    for i in range(procs):
+        size = base_chunk + (1 if i < rem else 0)
+        end = start + size
+        chunk_indexes.append((start, end))
+        start = end
+
+    return chunk_indexes
+
+
+# Life Simulation
 def chunk_simulation(matrix):
     rows = len(matrix)
     cols = len(matrix[0])
@@ -147,110 +269,18 @@ def main():
     print("Project :: R11998328")
 
     # 1.1 Data Retrieval
-    # Parser declaration
-    parser = argparse.ArgumentParser(description="Serial Cellular Life Simulator")
-
-    # Arguments declaration
-    parser.add_argument('-i', type=str, required=True, help="Path to the starting cellular matrix input file")
-    parser.add_argument('-o', type=str, required=True, help="Path for store cellular simulation matrix output file")
-    parser.add_argument('-p', type=int, default=1, help="Number of processes")
-
-    # Parse arguments from command line
-    args = parser.parse_args()
-
-    # Check if the input argument is not a file, inaccessible or not found
-    if not os.path.isfile(args.i):
-        print(f"Error: input file {args.i} not found or inaccessible")
-        sys.exit(1)
-
-    # Check if the directory for the output file exists
-    out_dir = os.path.dirname(args.o)  # Get the dir only for output
-    if out_dir and not os.path.isdir(out_dir):
-        print(f"Error: output directory {out_dir} not found or inaccessible")
-        sys.exit(1)
-
-    # Check if the processes argument is greater than or equal to 1
-    if args.p < 1:
-        print(f"Error: number of processes {args.p} is not 1 or greater")
-        sys.exit(1)
+    args = argument_parsing()
 
     # 1.2.1 Read Matrix
-    matrix = []
-    # with open(args.i) as file:
-    with open("test_inputs/100x100_time_step_0.dat") as file:
-        # Get first line in file
-        file_line = file.readline().strip()
-
-        # Adding dead cells to the row start
-        row = [0] * 2
-
-        # Getting all cells in row from file
-        for cell in file_line:
-            if cell in CELL_TO_VALUE:
-                row.append(CELL_TO_VALUE[cell])
-            elif cell != "\n":
-                print(f"Invalid cell type: '{cell}'")
-                sys.exit(1)
-
-        # Adding dead cells to the row end
-        row.extend([0, 0])
-
-        # Get constant length for all rows
-        cols = len(row)
-
-        # Adding the first row of the matrix
-        matrix.append(row)
-
-        # Get next lines in file
-        for file_line in file:
-            line = file_line.strip()
-
-            # Check if rows are all equal length
-            if len(line) != (cols - 4):
-                print(f"Invalid row length: '{len(line)}'")
-
-            row = [0] * 2
-
-            for cell in file_line:
-                if cell in CELL_TO_VALUE:
-                    row.append(CELL_TO_VALUE[cell])
-                elif cell != "\n":
-                    print(f"Invalid cell type: '{cell}'")
-                    sys.exit(1)
-
-            row.extend([0, 0])
-
-            # Adding rows with cells to matrix
-            matrix.append(row)
-
-        # Adding dead cells to the matrix
-        matrix = [[0] * cols, [0] * cols] + matrix + [[0] * cols, [0] * cols]
-
-        # Get constant height for matrix
-        rows = len(matrix)
+    matrix, cols, rows = read_matrix(args.i)
+    # matrix, cols, rows = read_matrix("test_inputs/100x100_time_step_0.dat")
 
     # 2.1 Concurrency Using Multiprocessing
     # Slicing calculation
-    procs = args.p
-    # procs = 7
-    live_rows = rows - 4
-    # Constant row allocation for all processes
-    base_chunk = live_rows // procs
-    # Remaining rows in case of imperfect division
-    rem = live_rows % procs
-
-    # Storing for matrix slices start and end indexes
-    chunk_indexes = []
-    start = 2
-
-    for i in range(procs):
-        size = base_chunk + (1 if i < rem else 0)
-        end = start + size
-        chunk_indexes.append((start, end))
-        start = end
+    chunk_indexes = matrix_slicing(args.p, rows - 4)
 
     # 1.3 Matrix Processing
-    with Pool(processes=procs) as pool:
+    with Pool(processes=args.p) as pool:
         for _ in range(100):
             # Scatter the matrix
             chunks = []
@@ -261,7 +291,7 @@ def main():
             res = pool.map(chunk_simulation, chunks)
 
             # Gather the updated rows
-            matrix = []
+            matrix.clear()
             for chunk in res:
                 matrix.extend(chunk)
 
@@ -269,15 +299,7 @@ def main():
             matrix = [[0] * cols, [0] * cols] + matrix + [[0] * cols, [0] * cols]
 
     # 1.2.2 Write Matrix
-    with open(args.o, 'w') as file:
-        # with open("test_output.txt", 'w') as file:
-        for y in range(2, rows - 2):
-            row = matrix[y]
-            for x in range(2, cols - 2):
-                # Changing number values to character representations
-                file.write(VALUE_TO_CELL[row[x]])
-
-            file.write('\n')
+    write_matrix(matrix, rows, cols, args.o)
 
 
 if __name__ == "__main__":
