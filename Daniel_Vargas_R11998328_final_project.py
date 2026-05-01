@@ -80,6 +80,9 @@ def rule_creation():
             else:
                 STAGE_UPDATE[-3][inner_score][outer_score] = -3
 
+# 1.3.2 Iterative Rules
+rule_creation()
+
 
 # Command Line Argument Parsing
 def argument_parsing():
@@ -270,9 +273,6 @@ def main():
     # 1.2.1 Read Matrix
     matrix, cols, rows = read_matrix(args.i)
     # matrix, cols, rows = read_matrix("test_inputs/100x100_time_step_0.dat")
-
-    # 1.3.2 Iterative Rules
-    rule_creation()
 
     # 2.1 Concurrency Using Multiprocessing
     # Slicing calculation
