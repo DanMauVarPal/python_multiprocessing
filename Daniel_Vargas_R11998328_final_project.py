@@ -276,17 +276,18 @@ def main():
 
     # 2.1 Concurrency Using Multiprocessing
     # Slicing calculation
-    chunk_indexes = matrix_slicing(args.p, rows - 4)
+    proc = args.p
+    # proc = 27
+
+    chunk_indexes = matrix_slicing(proc, rows - 4)
 
     # 1.3 Matrix Processing
-    with Pool(processes=args.p) as pool:
+    with Pool(processes=proc) as pool:
         for _ in range(100):
             # Scatter the matrix
             chunks = []
             for start, end in chunk_indexes:
                 chunks.append(matrix[start - 2: end + 2])
-
-            # proc_data = [(chunk, rows, cols, STAGE_UPDATE) for chunk in chunks
 
             # Start parallel processes
             res = pool.map(chunk_simulation, chunks)
